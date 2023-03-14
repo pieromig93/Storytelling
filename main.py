@@ -18,11 +18,42 @@ prendendo delle scelte in funzione di ciò che significativamente piace all'uten
 
 '''
 
-STATE_A, STATE_B, STATE_C = 0, 1, 2
+# per creare una rete in python si può utilizzare una libreria chiamata networkx
+import networkx as nx
+import matplotlib.pyplot as plt
+test_graph = nx.Graph()
 
-class Conversation:
-    actual_state = STATE_A
+G = nx.petersen_graph()
+nx.draw(G, with_labels=True, font_weight='bold')
+plt.show()
 
-    def get_state(self):
-        return self.actual_state
+# STATE_A, STATE_B, STATE_C = 0, 1, 2
+
+# class Conversation:
+#     states = [STATE_A, STATE_B, STATE_C]
+#     actual_state = -1
+
+#     def __init__(self):
+#         self.actual_state = STATE_A
+
+#     def get_state(self):
+#         return self.actual_state
+
+#     def set_state(self, state):
+#         self.actual_state = state
+
+# # class Perl:
+# #     next_perl
+# #     previuos_perl
+# #     topic =
+
+# class User:
+    
+#     id = 0
+#     # lista pesata
+#     preferences = []
+    
+#     def __init__(self):
+#         self.id = id+1
+
 
