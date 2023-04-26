@@ -1,0 +1,8 @@
+
+Mi serve per raggrupare le perle
+
+SELECT ?y WHERE{
+
+	pp:Domus_Of_Faun pp:contain ?y.
+}
+
