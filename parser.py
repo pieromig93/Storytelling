@@ -1,51 +1,69 @@
-"""
-    Una volta costruita l'ontologia si necessita della costruzione del grafo utilizzando le stringhe 
-    di perle. Questo avviene molto semplicemente: se prendiamo per esempio le domus di Pompei (o Norba) la perla potrebbe essere proprio la domus ed i 
-    contenuti appartenenti alla stessa domus vengono inseriti all'interno della perla. Ci basiamo su un'ontologia, e quindi, una struttura in rdf che
-    necessita di essere parserizzata.
-"""
-
-def clean_string(s):
-    return s[7:]
-
-
 from owlready2 import *
 
-# importo ontologia 
-onto_path.append("/home/h93/Piero/Uni/Storytelling/file/ontology")
-onto = get_ontology("http://www.semanticweb.org/h93/ontologies/2023/3/pompei")
-onto.load()
+STRING_SEPARATOR = '|'
+NULL_INFO = ' ""                               '
 
-# test query sparql
-ontology_class = default_world.sparql("""SELECT ?x WHERE{?x rdf:type owl:Class. } """)
-ontology_individual = default_world.sparql("""SELECT ?x WHERE{?x rdf:type owl:NamedIndividual. } """)
+onto_path.append("/home/h93/Piero/Uni/Storytelling/file/files prof/mara ontology")
+onto = get_ontology("mara.owl").load()
+class_list = list(onto.classes())
 
-# creo le perle con una prima query sparql mettendoci dentro tutte le domus annotate
-pearls = list(default_world.sparql("""SELECT ?x WHERE{?x rdf:type <http://www.semanticweb.org/h93/ontologies/2023/3/pompei#Domus> } """))
+annotation_file = open("/home/h93/Piero/Uni/Storytelling/file/files prof/mara ontology/output.annotations", "r") 
 
-for i in range(len(pearls)):
+# non considero l'intestazione del file
+annotation_file.seek(516)
+
+last_canvas_added = ''
+
+for line in annotation_file:
     
-    # aggiungo alle perle i contenuti specifici per ognuna
-    canvas_contained_into_pearl = []
-    linked_to_pearl = []
-    query_subject = clean_string(str(pearls[i][0]))
+    if line[0] == STRING_SEPARATOR:
+        
+        entry = line.split('|')[1:4]
+        if entry[1] == NULL_INFO:
+            
+            # creo le istanze
+            an = onto.Annotation()
+            an.name = entry[0].strip(" <>")
+            if last_canvas_added != entry[2].strip(" <>"):
+                can = onto.Canvas()
+                can.name = entry[2].strip(" <>")
+                last_canvas_added = can.name
+        
+        else:
+            
+            # recupero individui
+            annotation = onto.search_one(iri = f"*{entry[0].strip(' <>')}")
+            d = entry[1].strip('" "')[6:].capitalize()
+            canvas = onto.search_one(iri = f"*{entry[2].strip(' <>')}")
+            norba = onto.search_one(iri = "*Norba")
+            
+            if "mara."+d in str(class_list): 
+                d = "N_"+d
+            
+            detail = onto.search_one(iri = f"*{d}")
 
-    # devo costruire la stringa per la query sparql cosicché possa aggiungere al vettore delle perle i contenuti relativi alla domus
-    canvas_contained_into_pearl = list(default_world.
-                                       sparql("""SELECT ?canvas WHERE{ 
-                                                <http://www.semanticweb.org/h93/ontologies/2023/3/pompei#""" +query_subject+"""> 
-                                                <http://www.semanticweb.org/h93/ontologies/2023/3/pompei#contain>
-                                                ?canvas } """))
-    
-    linked_to_pearl = list(default_world.
-                                       sparql("""SELECT ?domus WHERE{ 
-                                                <http://www.semanticweb.org/h93/ontologies/2023/3/pompei#""" +query_subject+"""> 
-                                                <http://www.semanticweb.org/h93/ontologies/2023/3/pompei#isAdiacentTo>
-                                                ?domus } """))
-    pearls[i].append(canvas_contained_into_pearl)
-    pearls[i].append(linked_to_pearl)
+            if detail == None:
 
-for pearl in pearls:
-    print(pearl)
+                # creo l'oggetto relativo
+                if "Cas" in d or "Domu" in d:
+                    onto.Domus(d)
+                elif "Strad" in d or "Vie" in d:
+                    onto.Vie(d)
+                elif "Marcia" in d or "Coccio" in d:
+                    onto.Pavimenti(d)
+                else:
+                    onto.Beni(d)
+                detail = onto.search_one(iri = f"*{d}")
+                 
+            # assegno le object property
+            canvas.hasAnnotation.append(annotation)
+            canvas.isPartOf.append(norba)
+            annotation.detail.append(entry[1].replace(" ",""))
+            annotation.hasDetail.append(detail)
+            annotation.isPartOf.append(norba)
+            annotation.isInCanvas.append(canvas)
+            detail.isPartOf.append(norba)
+            detail.isContainedIntoAnnotation.append(annotation)
 
-# dalle perle appena create dobbiamo creare il grafo.
+            
+onto.save(file = "ext_mara.owl", format = "rdfxml")
