@@ -14,19 +14,25 @@ files = os.listdir("/home/h93/Piero/Uni/Storytelling/file/files prof/manifests")
 onto_path.append("/home/h93/Piero/Uni/Storytelling/file/files prof/mara ontology")
 onto = get_ontology("mara.owl").load()
 
-# metto in una lista tutte le classi e gli individui dell'ontologia
+# # metto in una lista tutte le classi e gli individui dell'ontologia
 class_list = list(onto.classes())
-individuals_list = list(onto.individuals())
+# individuals_list = list(onto.individuals())
 
-# normalizzo tutta la lista degli individui e delle classi per ottimizzare la ricerca degli elementi
-normalized_list_individuals = normalize_list(individuals_list)
+# # normalizzo tutta la lista degli individui e delle classi per ottimizzare la ricerca degli elementi
+# normalized_list_individuals = normalize_list(individuals_list)
 normalized_class_list = normalize_list(class_list)
 
 
 # cerco l'individuo più vicino all'annotazione letta
 def get_nearest_individual(s1):
-    
+
+    detail = None
+
+    individuals_list = list(onto.individuals())
+    normalized_list_individuals = normalize_list(individuals_list)
+
     s = s1.lower().replace("_","")[5:]
+    
     max_sim = 0
     max_individuo = None
     for ind in normalized_list_individuals:
@@ -38,27 +44,40 @@ def get_nearest_individual(s1):
     if max_sim >0.72:
         index = normalized_list_individuals.index(max_individuo)
         ind_name = str(individuals_list[index])[5:]
-        ind = onto.search_one(iri= f"*{ind_name}")
-        # print("STRING: "+s+" IND: "+ind.name)
-
+        detail = onto.search_one(iri= f"*{ind_name}")
+        # print("STRING: "+s+" IND: "+str(detail.name))
     else: 
-        # print(s)
+        # print("Creo il nuovo individuo: "+s)
         # vuol dire che non ho trovato corrispondenza con un individuo già presente nell'ontologia
         # bisogna creare un nuovo individuo
         # verificare che il nome sia diverso da quello di una classe
         if s in normalized_class_list:
-            print(s)
-        # creare l'individuo come figlio della classe più alta nella gerarchia delle classi
-        # append(s) in normalized_list
-        # sort di normalized list
-        ind = None
+            index = normalized_class_list.index(s)
+            searched_class = str(class_list[index]).split(".")[1]
+            onto_class = onto.search_one(iri=f"*{searched_class}")
+            onto_class(s+"_norba")
+            t = s+"_norba"
+            detail = onto.search_one(iri = f"*{t}")        
+        else:
+                # creo l'oggetto relativo
+                if "cas" in s or "domu" in s:
+                    onto.Domus(s)
+                elif "strad" in s or "vie" in s:
+                    onto.Vie(s)
+                elif "marcia" in s:
+                    onto.Pavimenti(s)
+                else:
+                    onto.Beni(s)
+                detail = onto.search_one(iri = f"*{s}")
 
-    return ind
+    return detail
 
 
 # per ogni file della directory devo leggerlo e popolare l'ontologia
 for file in files:
-    
+
+    individuals_list = list(onto.individuals())
+    normalized_list_individuals = normalize_list(individuals_list)
     annotation_file = open("/home/h93/Piero/Uni/Storytelling/file/files prof/manifests/"+str(file), "r")
     data = json.load(annotation_file)
     
@@ -80,30 +99,16 @@ for file in files:
                 # print(str(annotation['id'])+" ----> "+str(annotation['body']['value']))
                 an = onto.Annotation(str(annotation['id']))
                 detail = get_nearest_individual(str(annotation['body']['value']))
-                # print(detail)
 
-                # if detail == None:
-
-                #     # creo l'oggetto relativo
-                #     if "Cas" in d or "Domu" in d:
-                #         onto.Domus(d)
-                #     elif "Strad" in d or "Vie" in d:
-                #         onto.Vie(d)
-                #     elif "Marcia" in d or "Coccio" in d:
-                #         onto.Pavimenti(d)
-                #     else:
-                #         onto.Beni(d)
-                #     detail = onto.search_one(iri = f"*{d}")
-
-                # # assegno le object property
-                # canvas.hasAnnotation.append(an)
-                # an.isPartOf.append(norba)
-                # an.isInCanvas.append(canvas)
-                # an.hasDetail.append(detail)
-                # detail.isPartOf.append(norba)
-                # detail.isContainedIntoAnnotation.append(an)
+                # assegno le object property
+                canvas.hasAnnotation.append(an)
+                an.isPartOf.append(norba)
+                an.isInCanvas.append(canvas)
+                an.hasDetail.append(detail)
+                detail.isPartOf.append(norba)
+                detail.isContainedIntoAnnotation.append(an)
                     
         except:
             continue
 
-# onto.save(file = "ext_mara.owl", format = "rdfxml")
+onto.save(file = "ext_mara.owl", format = "rdfxml")
