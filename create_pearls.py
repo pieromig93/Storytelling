@@ -76,6 +76,16 @@ def isInCanavs(annotation):
     canvas_of_annotation = clean_list(canvas_of_annotation)
     return canvas_of_annotation
 
+def subClassOf(onto_class):
+    onto_class = remove_prefix(onto_class)
+    super_class = list(default_world.
+                                    sparql("""SELECT ?can WHERE{ 
+                                                <http://www.semanticweb.org/ontologies/2011/0/ProgettoAteneo2.owl#""" +onto_class+"""> 
+                                                rdfs:subClassOf
+                                                ?can } """))
+    super_class = clean_list(super_class)
+    return super_class[0]
+
 def get_super_class(detail):
     detail = remove_prefix(detail)
     super_class = list(default_world.
@@ -107,26 +117,6 @@ def create_graph_from_canvas(canvas, G):
     net.save_graph("./canvas_graph.html")
     HTML(filename="./canvas_graph.html")
 
-def clustering(canvas_list):
-    clustering_dict = {}
-    clustering_list = []
-    for canvas in canvas_list:    
-        clustering_list.append(canvas)
-        annotations_list = hasAnnotation(canvas)
-        for annotation in annotations_list:
-            detail = hasDetail(annotation)
-            mother_class = str(get_super_class(detail))
-            if clustering_dict.get(mother_class) == None:
-                # non presente nel dizionario
-                clustering_dict[mother_class] = 1
-            else:
-                # incremento quella già presente
-                clustering_dict[mother_class] = clustering_dict[mother_class]+1
-            
-        clustering_list.append(clustering_dict)
-        clustering_dict = {}
-    return clustering_list
-
 def get_mara_distances():
     
     nif = rdflib.Namespace('http://www.semanticweb.org/ontologies/2011/0/ProgettoAteneo2.owl#')
@@ -140,7 +130,7 @@ def get_mara_distances():
     for s, p, o in g:
         onto_graph.add_edge(str(s), str(o), key=str(p))
 
-    fout = open("/home/h93/Piero/Uni/Storytelling/mara_distances.csv", "w")
+    fout = open("/home/h93/Piero/Uni/Storytelling/ext_ara_distances.csv", "w")
 
     for c in get_all_canvas():
         for e in get_all_canvas():
@@ -152,7 +142,60 @@ def get_mara_distances():
                 except:
                     continue
 
+def clustering(canvas_list, axes):
+    
+    clustering_list = []
+    subclass_axis = []
+    clustering_dict = {}
+    
+    for axis in axes:
+        clustering_dict[axis] = 0
+        subclass_axis.append(get_all_subclass(axis))
+
+    for canvas in canvas_list:
+        
+        for axis in axes:
+            clustering_dict[axis] = 0    
+        
+        clustering_list.append(canvas)
+        annotations_list = hasAnnotation(canvas)
+        for annotation in annotations_list:
+            detail = hasDetail(annotation)
+            individual_class = get_super_class(detail)
+
+            if str(individual_class) in axes:
+                clustering_dict[str(individual_class)] += 1
+            else:
+                for sbl in subclass_axis:
+                    if individual_class in sbl:
+                        index = subclass_axis.index(sbl)
+                        clustering_dict[str(axes[index])] += 1
+    
+        clustering_list.append(clustering_dict)
+        clustering_dict = {}
+    return clustering_list
+
+
+def get_all_subclass(cls):
+    cls = remove_prefix(cls)
+    c  = onto.search_one(iri=f"*{cls}")
+    subclasses = list(c.subclasses())  
+    for sbc in subclasses:
+        sub = list(sbc.subclasses())
+        if len(sub)>0:
+            for s in sub:
+                subclasses.append(s)
+
+    return subclasses
+
 if __name__ == "__main__":
+
     print("Starting...")
-    fout = open("/home/h93/Piero/Uni/Storytelling/clu_info.txt", "w")
-    print(clustering(get_all_canvas()), file=fout)
+
+    # voglio clusterizzare rispetto a beni ed elementi architettonici
+    cluster_axis = ['ext_mara.Beni','ext_mara.Elementi_Architettonici']
+    test = clustering(get_all_canvas(),cluster_axis)
+    
+    with open("/home/h93/Piero/Uni/Storytelling/clu_info.txt", "w") as fout:
+        for t in test:
+            print(t, file=fout)
