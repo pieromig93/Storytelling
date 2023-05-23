@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 from pyvis.network import Network
 from IPython.display import HTML
 import rdflib
+import csv
+import numpy as np
+from sklearn.cluster import KMeans
 
 onto_path.append("/home/h93/Piero/Uni/Storytelling/")
 onto = get_ontology("ext_mara.owl").load()
@@ -151,6 +154,7 @@ def clustering(canvas_list, axes):
     for axis in axes:
         clustering_dict[axis] = 0
         subclass_axis.append(get_all_subclass(axis))
+        
 
     for canvas in canvas_list:
         
@@ -175,6 +179,19 @@ def clustering(canvas_list, axes):
         clustering_dict = {}
     return clustering_list
 
+def get_canvas_type(canvas_list):
+    
+    canvas_type = []  
+    for canvas in canvas_list:
+        canvas_type.append(canvas)
+        type = []
+        annotations_list = hasAnnotation(canvas)
+        for annotation in annotations_list:
+            detail = hasDetail(annotation)
+            individual_class = get_super_class(detail)
+            type.append(individual_class)
+        canvas_type.append(type)    
+    return canvas_type
 
 def get_all_subclass(cls):
     cls = remove_prefix(cls)
@@ -188,14 +205,32 @@ def get_all_subclass(cls):
 
     return subclasses
 
+
 if __name__ == "__main__":
 
     print("Starting...")
 
     # voglio clusterizzare rispetto a beni ed elementi architettonici
-    cluster_axis = ['ext_mara.Beni','ext_mara.Elementi_Architettonici']
-    test = clustering(get_all_canvas(),cluster_axis)
+    cluster_axis = ['ext_mara.Beni','ext_mara.Tecniche_Edilizie']
+    cluster_list = clustering(get_all_canvas(),cluster_axis)
+
+    fout = open("/home/h93/Piero/Uni/Storytelling/cluster.txt", "w+")
+    print("Canvas, x, y", file=fout) 
+    points = []
+
+    for i,t in enumerate(cluster_list):
+        if i%2!=0:
+            # plt.plot(t[cluster_axis[0]], t[cluster_axis[1]], 'ro')
+            print(str(t[cluster_axis[0]])+","+ str(t[cluster_axis[1]]), file=fout)
+            tmp = [t[cluster_axis[0]], t[cluster_axis[1]]]
+            points.append(tmp)
+            tmp = []
+        else:
+            print(str(t)+",", file=fout, end="")
+
+    X = np.array(points)
+    kmeans = KMeans(n_clusters=4, n_init='auto').fit(X)
+    plt.scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], color='black', s=150)
+    plt.scatter(X[:,0], X[:,1], c=kmeans.labels_, cmap='rainbow', s=50)
+    plt.show()
     
-    with open("/home/h93/Piero/Uni/Storytelling/clu_info.txt", "w") as fout:
-        for t in test:
-            print(t, file=fout)
