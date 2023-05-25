@@ -7,6 +7,7 @@ import rdflib
 import csv
 import numpy as np
 from sklearn.cluster import KMeans
+from sklearn import svm
 
 onto_path.append("/home/h93/Piero/Uni/Storytelling/")
 onto = get_ontology("ext_mara.owl").load()
@@ -205,7 +206,6 @@ def get_all_subclass(cls):
 
     return subclasses
 
-
 if __name__ == "__main__":
 
     print("Starting...")
@@ -230,7 +230,18 @@ if __name__ == "__main__":
 
     X = np.array(points)
     kmeans = KMeans(n_clusters=4, n_init='auto').fit(X)
-    plt.scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], color='black', s=150)
-    plt.scatter(X[:,0], X[:,1], c=kmeans.labels_, cmap='rainbow', s=50)
-    plt.show()
+    kmeans_two_cluster = KMeans(n_clusters=2, n_init='auto').fit(X)
+    svc = svm.SVC().fit(X, kmeans_two_cluster.labels_)
     
+    fig, axs = plt.subplots(2)
+    fig.suptitle('Clustering')
+    axs[0].scatter(kmeans_two_cluster.cluster_centers_[:,0], kmeans_two_cluster.cluster_centers_[:,1], color='gray', s=125)
+    axs[0].scatter(X[:,0], X[:,1], c = kmeans_two_cluster.labels_, cmap='rainbow', s=50)
+    axs[0].set_title('n_cluster = 2')
+    axs[0].plot(range(0, max(X[:,0])), 'r')
+    axs[1].scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], color='gray', s=125)
+    axs[1].scatter(X[:,0], X[:,1], c = kmeans.labels_, cmap='rainbow', s=50)
+    axs[1].set_title('n_cluster = 4')
+    
+    plt.show()
+
