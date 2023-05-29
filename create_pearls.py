@@ -7,7 +7,6 @@ import rdflib
 import csv
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn import svm
 
 onto_path.append("/home/h93/Piero/Uni/Storytelling/")
 onto = get_ontology("ext_mara.owl").load()
@@ -206,42 +205,57 @@ def get_all_subclass(cls):
 
     return subclasses
 
-if __name__ == "__main__":
-
-    print("Starting...")
-
-    # voglio clusterizzare rispetto a beni ed elementi architettonici
-    cluster_axis = ['ext_mara.Beni','ext_mara.Tecniche_Edilizie']
-    cluster_list = clustering(get_all_canvas(),cluster_axis)
-
-    fout = open("/home/h93/Piero/Uni/Storytelling/cluster.txt", "w+")
-    print("Canvas, x, y", file=fout) 
-    points = []
-
-    for i,t in enumerate(cluster_list):
-        if i%2!=0:
-            # plt.plot(t[cluster_axis[0]], t[cluster_axis[1]], 'ro')
-            print(str(t[cluster_axis[0]])+","+ str(t[cluster_axis[1]]), file=fout)
-            tmp = [t[cluster_axis[0]], t[cluster_axis[1]]]
-            points.append(tmp)
-            tmp = []
-        else:
-            print(str(t)+",", file=fout, end="")
-
-    X = np.array(points)
-    kmeans = KMeans(n_clusters=4, n_init='auto').fit(X)
-    kmeans_two_cluster = KMeans(n_clusters=2, n_init='auto').fit(X)
-    svc = svm.SVC().fit(X, kmeans_two_cluster.labels_)
+def graph_cluster(kmeans, kmeans_two_cluster):
     
     fig, axs = plt.subplots(2)
     fig.suptitle('Clustering')
     axs[0].scatter(kmeans_two_cluster.cluster_centers_[:,0], kmeans_two_cluster.cluster_centers_[:,1], color='gray', s=125)
     axs[0].scatter(X[:,0], X[:,1], c = kmeans_two_cluster.labels_, cmap='rainbow', s=50)
     axs[0].set_title('n_cluster = 2')
-    axs[0].plot(range(0, max(X[:,0])), 'r')
+    axs[0].plot(range(0, max(X[:,0])), 'k')
     axs[1].scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], color='gray', s=125)
     axs[1].scatter(X[:,0], X[:,1], c = kmeans.labels_, cmap='rainbow', s=50)
     axs[1].set_title('n_cluster = 4')
     
+    for ax in axs.flat:
+        ax.set(xlabel=cluster_axis[0], ylabel=cluster_axis[1])
+
     plt.show()
 
+# ! MAIN START HERE
+
+if __name__ == "__main__":
+
+    print("Starting...")
+
+    # voglio clusterizzare rispetto a beni ed elementi architettonici
+    canvas_list = get_all_canvas()
+    cluster_axis = ['ext_mara.Beni','ext_mara.Tecniche_Edilizie'] # supponiamo siano le preferenze dell'utente
+    cluster_list = clustering(canvas_list,cluster_axis)
+
+    # preparo i file per il salvataggio delle informazioni utili
+    file_kmeans_4C = open("/home/h93/Piero/Uni/Storytelling/kmeans4C.txt", "w")
+    fout = open("/home/h93/Piero/Uni/Storytelling/points.txt", "w+")
+    
+    points = []
+    for i,t in enumerate(cluster_list):
+        if i%2!=0:
+            print(str(t[cluster_axis[0]])+","+ str(t[cluster_axis[1]]), file=fout)
+            points.append([t[cluster_axis[0]], t[cluster_axis[1]]])
+        else:
+            print(str(t)+",", file=fout, end="")
+
+    
+    # creo il dataset
+    X = np.array(points)
+    
+    # clusterizzazione utiliazzando il kmeans
+    kmeans = KMeans(n_clusters=4, n_init='auto').fit(X)
+    kmeans_two_cluster = KMeans(n_clusters=2, n_init='auto').fit(X)
+
+    for i, l in enumerate(kmeans.labels_):
+        print(str(canvas_list[i])+","+str(l) ,file=file_kmeans_4C)
+
+    fout.close()
+    file_kmeans_4C.close()
+    graph_cluster(kmeans, kmeans_two_cluster)
