@@ -7,17 +7,14 @@ import rdflib
 import csv
 import numpy as np
 from sklearn.cluster import KMeans
+from math import radians, cos, sin, asin, sqrt
 
 onto_path.append("/home/h93/Piero/Uni/Storytelling/")
 onto = get_ontology("ext_mara.owl").load()
 
-# test ontology
 # metto in una lista tutte le classi e gli individui dell'ontologia
 class_list = list(onto.classes())
 individuals_list = list(onto.individuals())
-
-starting_canvas = 'ext_Mara.https://cosme.unicampania.it/rasta/norba/8-VIABILITA-Strade-antiche/index.json/canvas/4'
-canvas = [starting_canvas]
 
 def remove_prefix(s):
     return str(s).split(".",1)[1]
@@ -155,7 +152,6 @@ def clustering(canvas_list, axes):
         clustering_dict[axis] = 0
         subclass_axis.append(get_all_subclass(axis))
         
-
     for canvas in canvas_list:
         
         for axis in axes:
@@ -174,10 +170,70 @@ def clustering(canvas_list, axes):
                     if individual_class in sbl:
                         index = subclass_axis.index(sbl)
                         clustering_dict[str(axes[index])] += 1
-    
+
+        # normalizzazione sul numero totale di annotazioni
+        for axis in axes:
+            if len(annotations_list) != 0:
+                clustering_dict[axis] = clustering_dict[axis]/len(annotations_list)
+        
         clustering_list.append(clustering_dict)
         clustering_dict = {}
     return clustering_list
+
+def clustering_metric2(canvas_list, axes):
+    
+    clustering_list = []
+    subclass_axis = []
+    clustering_dict = {}
+    
+    for axis in axes:
+        clustering_dict[axis] = 0
+        subclass_axis.append(get_all_subclass(axis))
+        
+    for canvas in canvas_list:
+        
+        for axis in axes:
+            clustering_dict[axis] = 0    
+        
+        clustering_list.append(canvas)
+        annotations_list = hasAnnotation(canvas)
+        for annotation in annotations_list:
+            detail = hasDetail(annotation)
+            individual_class = get_super_class(detail)
+
+            for ax in axes:
+                sim = 0
+                if str(individual_class) != str(ax):
+                    s = distance(individual_class, ax)
+                    if s > 0:
+                        sim += s
+                else:
+                    sim = 1
+                
+                clustering_dict[ax] += sim
+                # print("AXIS: "+str(ax)+" ---- INDIV: "+str(individual_class)+" ---- VALUE: "+str(sim))
+
+        # normalizzazione sul numero totale di annotazioni
+        for axis in axes:
+            if len(annotations_list) != 0:
+                clustering_dict[axis] = clustering_dict[axis]/len(annotations_list)
+        
+        clustering_list.append(clustering_dict)
+        clustering_dict = {}
+    return clustering_list
+
+def distance(individual_class, axis):
+    individual_class = remove_prefix(individual_class)
+    axis = remove_prefix(axis)
+    file = open("/home/h93/Piero/Uni/Storytelling/mara_distances.csv", "r")
+    file_csv = csv.reader(file, delimiter=",")
+    
+    for row in file_csv:
+        if row[0]==individual_class and row[1]==axis:
+            sim  = 1/(1+int(row[2]))
+            return sim
+    
+    return -1
 
 def get_canvas_type(canvas_list):
     
@@ -207,12 +263,13 @@ def get_all_subclass(cls):
 
 def graph_cluster(kmeans, kmeans_two_cluster):
     
+    x = np.linspace(0, 1, 6)
     fig, axs = plt.subplots(2)
     fig.suptitle('Clustering')
-    axs[0].scatter(kmeans_two_cluster.cluster_centers_[:,0], kmeans_two_cluster.cluster_centers_[:,1], color='gray', s=125)
-    axs[0].scatter(X[:,0], X[:,1], c = kmeans_two_cluster.labels_, cmap='rainbow', s=50)
-    axs[0].set_title('n_cluster = 2')
-    axs[0].plot(range(0, max(X[:,0])), 'k')
+    # axs[0].scatter(kmeans_two_cluster.cluster_centers_[:,0], kmeans_two_cluster.cluster_centers_[:,1], color='gray', s=125)
+    axs[0].scatter(X[:,0], X[:,1])
+    axs[0].set_title('Space')
+    axs[0].plot(x, x+0, linestyle='dashed')
     axs[1].scatter(kmeans.cluster_centers_[:,0], kmeans.cluster_centers_[:,1], color='gray', s=125)
     axs[1].scatter(X[:,0], X[:,1], c = kmeans.labels_, cmap='rainbow', s=50)
     axs[1].set_title('n_cluster = 4')
@@ -222,40 +279,73 @@ def graph_cluster(kmeans, kmeans_two_cluster):
 
     plt.show()
 
+def orthodomic_distance():
+
+    # devo passare i valori letti
+    # The math module contains a function named
+    # radians which converts from degrees to radians.
+    lon1 = radians(lon1)
+    lon2 = radians(lon2)
+    lat1 = radians(lat1)
+    lat2 = radians(lat2)
+      
+    # Haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+ 
+    c = 2 * asin(sqrt(a))
+    
+    # Radius of earth in kilometers. Use 3956 for miles
+    r = 6371
+      
+    # calculate the result
+    return(c * r)
+
 # ! MAIN START HERE
 
 if __name__ == "__main__":
 
     print("Starting...")
-
+    
+    init_canvas = 'ext_Mara.https://cosme.unicampania.it/rasta/norba/1-EDIFICI-SACRI/index.json/canvas/10'
+    staring_canvas = [init_canvas]
     # voglio clusterizzare rispetto a beni ed elementi architettonici
-    canvas_list = get_all_canvas()
+    # canvas_list = get_all_canvas()
     cluster_axis = ['ext_mara.Beni','ext_mara.Tecniche_Edilizie'] # supponiamo siano le preferenze dell'utente
-    cluster_list = clustering(canvas_list,cluster_axis)
+    # cluster_list = clustering(canvas_list,cluster_axis)
 
-    # preparo i file per il salvataggio delle informazioni utili
-    file_kmeans_4C = open("/home/h93/Piero/Uni/Storytelling/kmeans4C.txt", "w")
-    fout = open("/home/h93/Piero/Uni/Storytelling/points.txt", "w+")
+    # # preparo i file per il salvataggio delle informazioni utili
+    # file_kmeans_4C = open("/home/h93/Piero/Uni/Storytelling/kmeans4C.txt", "w")
+    # fout = open("/home/h93/Piero/Uni/Storytelling/points.txt", "w+")
+    # file_pearls = open("/home/h93/Piero/Uni/Storytelling/pearls.txt", "w")
     
-    points = []
-    for i,t in enumerate(cluster_list):
-        if i%2!=0:
-            print(str(t[cluster_axis[0]])+","+ str(t[cluster_axis[1]]), file=fout)
-            points.append([t[cluster_axis[0]], t[cluster_axis[1]]])
-        else:
-            print(str(t)+",", file=fout, end="")
+    # points = []
+    # for i,t in enumerate(cluster_list):
+    #     if i%2!=0:
+    #         print(str(t[cluster_axis[0]])+","+ str(t[cluster_axis[1]]), file=fout)
+    #         points.append([t[cluster_axis[0]], t[cluster_axis[1]]])
+    #     else:
+    #         print(str(t)+",", file=fout, end="")
 
     
-    # creo il dataset
-    X = np.array(points)
+    # # creo il dataset
+    # X = np.array(points)
     
-    # clusterizzazione utiliazzando il kmeans
-    kmeans = KMeans(n_clusters=4, n_init='auto').fit(X)
-    kmeans_two_cluster = KMeans(n_clusters=2, n_init='auto').fit(X)
+    # # clusterizzazione utiliazzando il kmeans
+    # kmeans = KMeans(n_clusters=4, n_init='auto').fit(X)
+    # kmeans_two_cluster = KMeans(n_clusters=2, n_init='auto').fit(X)
 
-    for i, l in enumerate(kmeans.labels_):
-        print(str(canvas_list[i])+","+str(l) ,file=file_kmeans_4C)
+    # for i, l in enumerate(kmeans.labels_):
+    #     print(str(canvas_list[i])+","+str(l) ,file=file_kmeans_4C)
 
-    fout.close()
-    file_kmeans_4C.close()
-    graph_cluster(kmeans, kmeans_two_cluster)
+    # fout.close()
+    # file_kmeans_4C.close()
+    # graph_cluster(kmeans, kmeans_two_cluster)
+
+    # # le perle vanno create per posizione, vediamo come fare
+    # # avendo la posizione iniziale dell'utente viene suggerito di iniziare il tragitto dalla perla più vicina
+    # file_pearls.close()
+
+    clustering_metric2(get_all_canvas(), cluster_axis)
+    
