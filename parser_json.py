@@ -18,7 +18,7 @@ onto = get_ontology("mara.owl").load()
 class_list = list(onto.classes())
 # individuals_list = list(onto.individuals())
 
-# # normalizzo tutta la lista degli individui e delle classi per ottimizzare la ricerca degli elementi
+# normalizzo tutta la lista degli individui e delle classi per ottimizzare la ricerca degli elementi
 # normalized_list_individuals = normalize_list(individuals_list)
 normalized_class_list = normalize_list(class_list)
 
