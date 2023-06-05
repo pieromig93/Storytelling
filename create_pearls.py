@@ -311,41 +311,41 @@ if __name__ == "__main__":
     init_canvas = 'ext_Mara.https://cosme.unicampania.it/rasta/norba/1-EDIFICI-SACRI/index.json/canvas/10'
     staring_canvas = [init_canvas]
     # voglio clusterizzare rispetto a beni ed elementi architettonici
-    # canvas_list = get_all_canvas()
+    canvas_list = get_all_canvas()
     cluster_axis = ['ext_mara.Beni','ext_mara.Tecniche_Edilizie'] # supponiamo siano le preferenze dell'utente
     # cluster_list = clustering(canvas_list,cluster_axis)
+    cluster_list = clustering_metric2(get_all_canvas(), cluster_axis)
 
-    # # preparo i file per il salvataggio delle informazioni utili
-    # file_kmeans_4C = open("/home/h93/Piero/Uni/Storytelling/kmeans4C.txt", "w")
-    # fout = open("/home/h93/Piero/Uni/Storytelling/points.txt", "w+")
-    # file_pearls = open("/home/h93/Piero/Uni/Storytelling/pearls.txt", "w")
+    # preparo i file per il salvataggio delle informazioni utili
+    file_kmeans_4C = open("/home/h93/Piero/Uni/Storytelling/kmeans4C.txt", "w")
+    fout = open("/home/h93/Piero/Uni/Storytelling/points.txt", "w+")
+    file_pearls = open("/home/h93/Piero/Uni/Storytelling/pearls.txt", "w")
     
-    # points = []
-    # for i,t in enumerate(cluster_list):
-    #     if i%2!=0:
-    #         print(str(t[cluster_axis[0]])+","+ str(t[cluster_axis[1]]), file=fout)
-    #         points.append([t[cluster_axis[0]], t[cluster_axis[1]]])
-    #     else:
-    #         print(str(t)+",", file=fout, end="")
+    points = []
+    for i,t in enumerate(cluster_list):
+        if i%2!=0:
+            print(str(t[cluster_axis[0]])+","+ str(t[cluster_axis[1]]), file=fout)
+            points.append([t[cluster_axis[0]], t[cluster_axis[1]]])
+        else:
+            print(str(t)+",", file=fout, end="")
+
+    # creo il dataset
+    X = np.array(points)
+    
+    # clusterizzazione utiliazzando il kmeans
+    kmeans = KMeans(n_clusters=4, n_init='auto').fit(X)
+    kmeans_two_cluster = KMeans(n_clusters=2, n_init='auto').fit(X)
+
+    for i, l in enumerate(kmeans.labels_):
+        print(str(canvas_list[i])+","+str(l) ,file=file_kmeans_4C)
+
+    fout.close()
+    file_kmeans_4C.close()
+    graph_cluster(kmeans, kmeans_two_cluster)
+
+    # le perle vanno create per posizione, vediamo come fare
+    # avendo la posizione iniziale dell'utente viene suggerito di iniziare il tragitto dalla perla più vicina
+    file_pearls.close()
 
     
-    # # creo il dataset
-    # X = np.array(points)
-    
-    # # clusterizzazione utiliazzando il kmeans
-    # kmeans = KMeans(n_clusters=4, n_init='auto').fit(X)
-    # kmeans_two_cluster = KMeans(n_clusters=2, n_init='auto').fit(X)
-
-    # for i, l in enumerate(kmeans.labels_):
-    #     print(str(canvas_list[i])+","+str(l) ,file=file_kmeans_4C)
-
-    # fout.close()
-    # file_kmeans_4C.close()
-    # graph_cluster(kmeans, kmeans_two_cluster)
-
-    # # le perle vanno create per posizione, vediamo come fare
-    # # avendo la posizione iniziale dell'utente viene suggerito di iniziare il tragitto dalla perla più vicina
-    # file_pearls.close()
-
-    clustering_metric2(get_all_canvas(), cluster_axis)
     
