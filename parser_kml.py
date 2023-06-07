@@ -16,7 +16,6 @@ route_name = doc.getroot().Document.name
 route = onto.Itinerario(route_name)
 norba = onto.search_one(iri = "*Norba")
 route.isPartOf.append(norba)
-print(route_name)
 
 for placemark in placemarks:
     # Processa ogni placemark

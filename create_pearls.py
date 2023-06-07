@@ -56,10 +56,20 @@ def hasDetail(annotation):
     detail_of_annotation = clean_list(detail_of_annotation)
     return detail_of_annotation[0]
 
+def hasDetailList(annotation):
+    annotation = remove_prefix(annotation)
+    detail_of_annotation = list(default_world.
+                                    sparql("""SELECT ?detail WHERE{ 
+                                                <http://www.semanticweb.org/ontologies/2011/0/ProgettoAteneo2.owl#""" +annotation+"""> 
+                                                <http://www.semanticweb.org/ontologies/2011/0/ProgettoAteneo2.owl#hasDetail>
+                                                ?detail } """))
+    detail_of_annotation = clean_list(detail_of_annotation)
+    return detail_of_annotation
+
 def isContainedIntoAnnotation(detail):
     detail = remove_prefix(detail)
     annotation_of_detail = list(default_world.
-                                    sparql("""SELECT ?an WHERE{ 
+                                    sparql("""SELECT DISTINCT ?an WHERE{ 
                                                 <http://www.semanticweb.org/ontologies/2011/0/ProgettoAteneo2.owl#""" +detail+"""> 
                                                 <http://www.semanticweb.org/ontologies/2011/0/ProgettoAteneo2.owl#isContainedIntoAnnotation>
                                                 ?an } """))
@@ -69,7 +79,7 @@ def isContainedIntoAnnotation(detail):
 def isInCanavs(annotation):
     annotation = remove_prefix(annotation)
     canvas_of_annotation = list(default_world.
-                                    sparql("""SELECT ?can WHERE{ 
+                                    sparql("""SELECT DISTINCT ?can WHERE{ 
                                                 <http://www.semanticweb.org/ontologies/2011/0/ProgettoAteneo2.owl#""" +annotation+"""> 
                                                 <http://www.semanticweb.org/ontologies/2011/0/ProgettoAteneo2.owl#isInCanvas>
                                                 ?can } """))
@@ -98,6 +108,11 @@ def get_super_class(detail):
                                                 } """))
     super_class = clean_list(super_class)
     return super_class[0]
+
+def get_coordinates(pearls_list):
+    for pearl in pearls_list:
+        poi = onto.search_one(iri=f"*{pearl}")
+        print(poi.hasValue)
 
 def create_graph_from_canvas(canvas, G):
     for c in canvas:
@@ -279,28 +294,6 @@ def graph_cluster(kmeans, kmeans_two_cluster):
 
     plt.show()
 
-def orthodomic_distance():
-
-    # devo passare i valori letti
-    # The math module contains a function named
-    # radians which converts from degrees to radians.
-    lon1 = radians(lon1)
-    lon2 = radians(lon2)
-    lat1 = radians(lat1)
-    lat2 = radians(lat2)
-      
-    # Haversine formula
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
- 
-    c = 2 * asin(sqrt(a))
-    
-    # Radius of earth in kilometers. Use 3956 for miles
-    r = 6371
-      
-    # calculate the result
-    return(c * r)
 
 # ! MAIN START HERE
 
@@ -319,7 +312,6 @@ if __name__ == "__main__":
     # preparo i file per il salvataggio delle informazioni utili
     file_kmeans_4C = open("/home/h93/Piero/Uni/Storytelling/kmeans4C.txt", "w")
     fout = open("/home/h93/Piero/Uni/Storytelling/points.txt", "w+")
-    file_pearls = open("/home/h93/Piero/Uni/Storytelling/pearls.txt", "w")
     
     points = []
     for i,t in enumerate(cluster_list):
@@ -342,10 +334,6 @@ if __name__ == "__main__":
     fout.close()
     file_kmeans_4C.close()
     graph_cluster(kmeans, kmeans_two_cluster)
-
-    # le perle vanno create per posizione, vediamo come fare
-    # avendo la posizione iniziale dell'utente viene suggerito di iniziare il tragitto dalla perla più vicina
-    file_pearls.close()
 
     
     
