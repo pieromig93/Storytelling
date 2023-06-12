@@ -6,6 +6,9 @@ import csv
 import math
 import user
 
+visited_pearl = []
+visited_canvas = []
+
 def get_point_from_canvas(actual_canvas):
     file = open("/home/h93/Piero/Uni/Storytelling/points.txt","r")
     file_csv = csv.reader(file, delimiter=',')
@@ -39,16 +42,18 @@ def check_canvas_pearl(canvas, route, actual_pearl):
 def get_profile_point(preferences):
     return [preferences[0]/preferences[2], preferences[1]/preferences[2]]
 
-def update_profile_preferences(canvas, preferences):
+def update_profile_preferences(canvas, user):
+
+    user.visited_canvas.append(str(canvas))
     
-    if len(preferences) == 0:
+    if len(user.preferences) == 0:
         user_num_x = 0
         user_num_y = 0
         user_den = 0
     else:
-        user_num_x = preferences[0]
-        user_num_y = preferences[1]
-        user_den = preferences[2]
+        user_num_x = user.preferences[0]
+        user_num_y = user.preferences[1]
+        user_den = user.preferences[2]
 
     cluster_axis = ['ext_mara.Beni','ext_mara.Tecniche_Edilizie'] # supponiamo siano le preferenze dell'utente
     user_info = cr.clustering([canvas],cluster_axis)
@@ -58,17 +63,27 @@ def update_profile_preferences(canvas, preferences):
 
     return [user_num_x, user_num_y, user_den]
 
-def get_next_canvas(actual_canvas, route, actual_pearl, canvas_counter, user):
+def get_next_canvas(actual_canvas, route, actual_pearl, counter, user):
     file = open("/home/h93/Piero/Uni/Storytelling/points.txt","r")
     file_csv = csv.reader(file, delimiter=',')
     profile_point = get_profile_point(user.preferences)
     actual_canvas_point = get_point_from_canvas(actual_canvas)
+    distances_between_canvas = []
     for row in file_csv:
-        if cr.remove_prefix(str(row[0])) != str(actual_canvas) and check_canvas_pearl(cr.remove_prefix(str(row[0])), route, actual_pearl) > 0:
+        if check_canvas_pearl(cr.remove_prefix(str(row[0])), route, actual_pearl) > 0 and str(row[0]) not in user.visited_canvas:    
             alpha1 = math.sqrt(pow(float(actual_canvas_point[0])-float(row[1]),2)+pow(float(actual_canvas_point[1])-float(row[2]),2))
             alpha2 = math.sqrt(pow(float(profile_point[0])-float(row[1]),2)+pow(float(profile_point[1])-float(row[2]),2))
             print("Canvas: "+str(cr.remove_prefix(str(row[0])))+"\nDistance(alpha1): "+str(alpha1)+" \nDistance(alpha2)"+str(alpha2)+ "\nTotal distance: "+str(alpha1+alpha2))
-            
+            distances_between_canvas.append((row[0], alpha1+alpha2))
+    
+    distances_between_canvas.sort(key=lambda a:a[1])
+    suggested_canvas = []
+    for i in range(3):
+        suggested_canvas.append(distances_between_canvas[i][0])
+
+    return suggested_canvas
+
+# ? ―――――――――――――――――――――――――――――――――― MAIN ――――――――――――――――――――――――――――――――――
 
 if __name__ == '__main__':
     print("Starting...")    
@@ -98,9 +113,9 @@ if __name__ == '__main__':
     # print("Starting Canvas: "+str(starting_canvas))
     # start_time_on_actual_canvas = time.time()
     canvas_counter += 1
-    starting_canvas = "ext_mara.https://cosme.unicampania.it/rasta/norba/7-TERME/index.json/canvas/1"
-    user_maria_anna.preferences = update_profile_preferences(starting_canvas, user_maria_anna.preferences)
-    # print(get_profile_point(user_maria_anna.preferences))
-    get_next_canvas(starting_canvas, sample_route, actual_pearl, canvas_counter, user_maria_anna)
-    
+    starting_canvas = "ext_mara.https://cosme.unicampania.it/rasta/norba/7-TERME/index.json/canvas/6"
+    user_maria_anna.preferences = update_profile_preferences(starting_canvas, user_maria_anna)
+    suggested_canvas = get_next_canvas(starting_canvas, sample_route, actual_pearl, canvas_counter, user_maria_anna)
+    for i,fc in enumerate(suggested_canvas):
+        print(str(i)+")"+str(fc))
     
