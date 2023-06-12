@@ -5,8 +5,6 @@ import test as t
 import requests
 import itertools
 
-visited_pearl = []
-visited_canvas = []
 
 def get_canvas_from_pearl(pearl):
 
