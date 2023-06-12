@@ -14,9 +14,10 @@ def get_canvas_from_pearl(pearl):
     file_csv = csv.reader(pearls_file, delimiter=",")
     canvas_from_pearl = []
     for row in file_csv:
+        # print(str(row[0])+"----"+str(pearl))
         if str(row[0]) == str(pearl):
             canvas_from_pearl.append(row[1])
-    
+    pearls_file.seek(0,0) 
     pearls_file.close()
     return canvas_from_pearl
 
@@ -84,7 +85,7 @@ def get_total_time(route):
 def create_time_route(route_list):
     file = open("/home/h93/Piero/Uni/Storytelling/possibile_route.txt", "w")
     for r in route_list:
-        print(str(r).replace("(", "").replace(")","").replace(" ", "").replace("'", "").replace('"', "")+","+str(get_total_time(r)), file=file)
+        print(str(r).replace(" ", "_").replace('"', '').replace("(","").replace(")","")+","+str(get_total_time(r)), file=file)
         # print(str(r).replace("(", "").replace(")","").replace(" ", "").replace("'", "").replace('"', ""), file=file)
     file.close()
 
@@ -93,14 +94,14 @@ def pearls_time_filter(user_max_time):
     file_csv = csv.reader(file, delimiter=',')
     possible_route = []
     for row in file_csv:
-        if int(row[3])< user_max_time:
+        if int(row[3])< int(user_max_time):
             route_tuple = (row[0], row[1], row[2])
             possible_route.append(route_tuple)
 
     return possible_route
 
 def print_route_pos(actual_pearl, route):
-    print("Actual route: ")
+    print("\nRoute: ")
     for i,r in enumerate(route):
         if i == actual_pearl:
             print(str(i)+")"+str(r)+" <---")
@@ -109,6 +110,8 @@ def print_route_pos(actual_pearl, route):
 
     print("")
 
+
+# ! MAIN
 if __name__ == '__main__':
     print("Starting...\n")
     # Supponiamo che l'utente abbia preferenze (Beni, Tecniche_edilizie)

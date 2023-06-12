@@ -42,7 +42,7 @@ def getCanvasFromPOI(poi_list):
             annotation_list = cp.isContainedIntoAnnotation(detail)
             for an in annotation_list:
                 canvas = cp.isInCanavs(an)
-                print(str(poi)+","+str(cp.remove_prefix(canvas[0])), file=pearls_file)
+                print(str(poi)+","+str(canvas[0]), file=pearls_file)
 
 if __name__ == '__main__':
     print("creating Perls...")

@@ -158,7 +158,7 @@ def clustering(canvas_list, axes):
     clustering_list = []
     subclass_axis = []
     clustering_dict = {}
-    
+    annotation_len = 0
     for axis in axes:
         clustering_dict[axis] = 0
         subclass_axis.append(get_all_subclass(axis))
@@ -170,6 +170,7 @@ def clustering(canvas_list, axes):
         
         clustering_list.append(canvas)
         annotations_list = hasAnnotation(canvas)
+        annotation_len = len(annotations_list)
         for annotation in annotations_list:
             detail = hasDetail(annotation)
             individual_class = get_super_class(detail)
@@ -183,13 +184,13 @@ def clustering(canvas_list, axes):
                         clustering_dict[str(axes[index])] += 1
 
         # normalizzazione sul numero totale di annotazioni
-        for axis in axes:
-            if len(annotations_list) != 0:
-                clustering_dict[axis] = clustering_dict[axis]/len(annotations_list)
+        # for axis in axes:
+        #     if len(annotations_list) != 0:
+        #         clustering_dict[axis] = clustering_dict[axis]/len(annotations_list)
         
         clustering_list.append(clustering_dict)
         clustering_dict = {}
-    return clustering_list
+    return clustering_list, annotation_len
 
 def clustering_metric2(canvas_list, axes):
     
