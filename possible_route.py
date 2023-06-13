@@ -1,7 +1,7 @@
 import csv
 import random
 import create_cluster as cp
-import test as t
+import create_pearls as t
 import requests
 import itertools
 
@@ -41,7 +41,8 @@ def filter_canvas(canvas_list):
     for canvas in canvas_list:
         # 1) controllo presenza nel cluster omogenei rispetto alle preferenze utente (cluster 2)
         for row in file_csv:
-            if str(cp.remove_prefix(row[0])) == str(canvas) and str(row[1])==str(2):
+            # print(row[0], canvas)
+            if str(cp.remove_prefix(row[0])) == str(cp.remove_prefix(canvas)) and str(row[1])==str(2):
                 suggested_canvas.append(canvas)
         
         cluster_file.seek(0,0)
@@ -83,7 +84,7 @@ def get_total_time(route):
 def create_time_route(route_list):
     file = open("/home/h93/Piero/Uni/Storytelling/possibile_route.txt", "w")
     for r in route_list:
-        print(str(r).replace(" ", "_").replace('"', '').replace("(","").replace(")","")+","+str(get_total_time(r)), file=file)
+        print(str(r).replace(" ", "").replace('"', '').replace("(","").replace(")","").replace("'","")+","+str(get_total_time(r)), file=file)
         # print(str(r).replace("(", "").replace(")","").replace(" ", "").replace("'", "").replace('"', ""), file=file)
     file.close()
 
