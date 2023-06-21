@@ -36,16 +36,19 @@ def getPOIwithDetail():
 
 def getCanvasFromPOI(poi_list):
     added_tuple =[]
+    added_canvas = []
     pearls_file = open("/home/h93/Piero/Uni/Storytelling/pearls.txt", "w")
+    
     for poi in poi_list:
         detail_list = cp.hasDetailList(poi)
         for detail in detail_list:
             annotation_list = cp.isContainedIntoAnnotation(detail)
             for an in annotation_list:
                 canvas = cp.isInCanavs(an)
-                if (str(poi), str(canvas)) not in added_tuple:
+                if (str(poi), str(canvas)) not in added_tuple and str(canvas) not in added_canvas:
                     print(str(poi)+","+str(canvas[0]), file=pearls_file)
                     added_tuple.append((str(poi), str(canvas)))
+                    added_canvas.append(str(canvas))
 
 if __name__ == '__main__':
     print("creating Perls...")
