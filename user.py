@@ -5,6 +5,7 @@ class User:
     visited_canvas = []
     visited_pearls = []
     name = ""
+    total_awareness = 0
     
     def __init__(self, name, pref, route):
         self.name = name

@@ -1,6 +1,8 @@
 import possible_route as pr
 import create_cluster as cr
 import debug_print as dp
+# import plot as pl
+import plot_bokeh as pl
 import random
 import time
 import csv
@@ -15,6 +17,17 @@ def print_canvas_wp(canvas_list):
 def print_canvas(canvas_list):
     for i, c in enumerate(canvas_list):
         print(str(i)+") "+str(c))
+
+def get_canvas_from_pearl(pearl):
+    file_pearl = open("/home/h93/Piero/Uni/Storytelling/pearls.txt","r")
+    file_pearl_csv = csv.reader(file_pearl, delimiter=',')
+    canvas_in_pearl = []
+    for row in file_pearl_csv:
+        if row[0] == pearl:
+            canvas_in_pearl.append(row[1])
+    
+    file_pearl.close()
+    return canvas_in_pearl
 
 def get_pearl_from_canvas(canvas):
     file = open("/home/h93/Piero/Uni/Storytelling/pearls.txt", "r")
@@ -119,11 +132,11 @@ def get_next_canvas(actual_canvas, route, actual_pearl, canvas_counter, user, fi
     
     # struttura contenente i canvas con le relative distanze
     distances_between_canvas = []
-    
+    examinated_canvas = []    
     for row in file_csv:
         
         pi = check_canvas_pearl(cr.remove_prefix(str(row[0])), route, actual_pearl, canvas_counter)
-        
+
         # se qui nell'if aggiungo anche la condizione se presente o meno nella filtered_list lavoro solo su quelli appartenenti a quel cluster
         if pi > 0 and str(row[0]) not in user.visited_canvas:
         # if pi > 0 and str(row[0]) not in user.visited_canvas and str(row[0]) in filtered_canvas:    
@@ -137,20 +150,20 @@ def get_next_canvas(actual_canvas, route, actual_pearl, canvas_counter, user, fi
                 #   str(get_pearl_from_canvas(row[0])[0])+"\n")
             
             distances_between_canvas.append((row[0], pi*(alpha1+alpha2), get_pearl_from_canvas(row[0])))
-    
+            examinated_canvas.append(row[0])
     # print("CANVAS ANALYZED: "+str(len(distances_between_canvas))+"\n")
     distances_between_canvas.sort(key=lambda a:a[1])
     
-    print(dp.debug_line)
-    for d in distances_between_canvas:
-        print(d)
-    print(dp.end_line+"\n")
+    # print(dp.debug_line)
+    # for d in distances_between_canvas:
+    #     print(d)
+    # print(dp.end_line+"\n")
     suggested_canvas = []
     for i in range(2):
         suggested_canvas.append(distances_between_canvas[i][0])
     file.close()
 
-    return suggested_canvas
+    return suggested_canvas, examinated_canvas
 
 # ? ―――――――――――――――――――――――――――――――――― MAIN ――――――――――――――――――――――――――――――――――
 
@@ -197,7 +210,8 @@ if __name__ == '__main__':
     print("\nYou are looking the canvas: "+str(choiced_canvas)+"\n")
     user_maria_anna.preferences = update_profile_preferences(choiced_canvas, user_maria_anna, actual_pearl)
     
-    suggested_canvas = get_next_canvas(choiced_canvas, sample_route, actual_pearl, user_maria_anna.canvas_in_pearl_counter[actual_pearl], user_maria_anna, 0)
+    suggested_canvas, examinated_canvas = get_next_canvas(choiced_canvas, sample_route, actual_pearl, user_maria_anna.canvas_in_pearl_counter[actual_pearl], user_maria_anna, 0)
+    pl.plot_point(choiced_canvas, examinated_canvas, user_maria_anna, suggested_canvas, sample_route, actual_pearl)
     print_canvas_wp(suggested_canvas)
     
     choice = ''
@@ -226,7 +240,8 @@ if __name__ == '__main__':
         print("You are looking the canvas: "+str(choiced_canvas)+"\n")
         user_maria_anna.preferences = update_profile_preferences(choiced_canvas, user_maria_anna,actual_pearl)
 
-        suggested_canvas = get_next_canvas(choiced_canvas, sample_route, actual_pearl, user_maria_anna.canvas_in_pearl_counter[actual_pearl], user_maria_anna, 0)
+        suggested_canvas, examinated_canvas = get_next_canvas(choiced_canvas, sample_route, actual_pearl, user_maria_anna.canvas_in_pearl_counter[actual_pearl], user_maria_anna, 0)
+        pl.plot_point(choiced_canvas, examinated_canvas, user_maria_anna, suggested_canvas, sample_route, actual_pearl)
         print_canvas_wp(suggested_canvas)
 
         print(f"\nWatched {user_maria_anna.canvas_in_pearl_counter} of {get_number_of_canvas_from_pearl(sample_route[actual_pearl])} canvas. Total canvas are: {total_canvas}")
