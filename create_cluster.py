@@ -223,7 +223,14 @@ def clustering_metric2(canvas_list, axes):
                     sim = 1
                 
                 clustering_dict[ax] += sim
-                # print("AXIS: "+str(ax)+" ---- INDIV: "+str(individual_class)+" ---- VALUE: "+str(sim))
+                # print(  "CANVAS:"+str(canvas)+
+                #         "\nAXIS: "+
+                #         str(ax)+"\nINDIV: "+
+                #         str(individual_class)+"\nVALUE: "+
+                #         str(sim)+"\nCLUSTER: "+
+                #         str(clustering_dict)+
+                #         "\n"
+                #     )
 
         # normalizzazione sul numero totale di annotazioni
         for axis in axes:
@@ -245,6 +252,7 @@ def distance(individual_class, axis):
             sim  = 1/(1+int(row[2]))
             return sim
     
+    file.close()
     return -1
 
 def get_canvas_type(canvas_list):
