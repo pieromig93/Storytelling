@@ -9,7 +9,7 @@ import csv
 import math
 import user
 import os
-
+    
 def compute_satisfaction(user):
     with open("/home/h93/Piero/Uni/Storytelling/points.txt", "r") as file:
         file_csv = csv.reader(file, delimiter=",")
@@ -42,9 +42,9 @@ def compute_satisfaction(user):
     elif(distance > 0.6 and distance < 1):
         satisfaction = 1
     else:
-        satisfaction =0
+        satisfaction = 0
     
-    if len(user.satisfaction)>0:
+    if len(user.satisfaction) > 0:
         user.satisfaction.append(user.satisfaction[-1]+satisfaction)
     else:
         user.satisfaction.append(satisfaction)
@@ -175,7 +175,9 @@ def update_profile_preferences(canvas, user, actual_pearl):
     user_num_x += user_info[0][1][cluster_axis[0]]
     user_num_y += user_info[0][1][cluster_axis[1]]
     user_den += user_info[1]
-
+    
+    compute_satisfaction(user_maria_anna)
+    
     return [user_num_x, user_num_y, user_den]
 
 # ! FUNZIONE CHE RESTITUISCE LA LISTA CONTENENTE I CANVAS PIÙ VICINI
@@ -217,7 +219,6 @@ def get_next_canvas(actual_canvas, route, actual_pearl, canvas_counter, user, fi
     # for d in distances_between_canvas:
     #     print(d)
     # print(dp.end_line+"\n")
-    canvas_stars = 0
     
     suggested_canvas = []
     for i in range(2):
@@ -248,7 +249,9 @@ if __name__ == '__main__':
     
     # devo calcolare l'awareness totale del percorso
 
-    user_maria_anna = user.User("MariaAnna", [], sample_route)
+    user_maria_anna = user.User("MariaAnna", [], sample_route,"cyan")
+
+    
     actual_pearl = 0
     pr.print_route_pos(actual_pearl, sample_route)
     total_canvas = 0
@@ -280,9 +283,8 @@ if __name__ == '__main__':
 
     print("\nYou are looking the canvas: "+str(choiced_canvas)+"\n")
     user_maria_anna.preferences = update_profile_preferences(choiced_canvas, user_maria_anna, actual_pearl)
-    
     suggested_canvas, examinated_canvas = get_next_canvas(choiced_canvas, sample_route, actual_pearl, user_maria_anna.canvas_in_pearl_counter[actual_pearl], user_maria_anna, 0)
-    # pl.plot_point(choiced_canvas, examinated_canvas, user_maria_anna, suggested_canvas, sample_route, actual_pearl)
+    pl.plot_point(choiced_canvas, examinated_canvas, user_maria_anna, suggested_canvas, sample_route, actual_pearl)
     print_canvas_wp(suggested_canvas)
     
     choice = ''
@@ -295,6 +297,9 @@ if __name__ == '__main__':
                 if sample_route[actual_pearl] not in get_pearl_from_canvas(tmp_choice):    
                     change_pearl = input("Attention! You're looking for another pearl, this need your move to another POI! Are you sure?(y/n): ")
                     if change_pearl == 'y':
+                        previous_pearl = actual_pearl
+                        user_maria_anna.change_pearl_satisfaction_value.append(user_maria_anna.satisfaction[-1])
+                        user_maria_anna.change_pearl_counter+=1
                         choiced_canvas = tmp_choice
                         actual_pearl_str = get_pearl_from_canvas(choiced_canvas)
                         actual_pearl = sample_route.index(actual_pearl_str[0])
@@ -310,15 +315,11 @@ if __name__ == '__main__':
         
         print("You are looking the canvas: "+str(choiced_canvas)+"\n")
         user_maria_anna.preferences = update_profile_preferences(choiced_canvas, user_maria_anna,actual_pearl)
-        
         suggested_canvas, examinated_canvas = get_next_canvas(choiced_canvas, sample_route, actual_pearl, user_maria_anna.canvas_in_pearl_counter[actual_pearl], user_maria_anna, 0)
-        # pl.plot_point(choiced_canvas, examinated_canvas, user_maria_anna, suggested_canvas, sample_route, actual_pearl)
+        pl.plot_point(choiced_canvas, examinated_canvas, user_maria_anna, suggested_canvas, sample_route, actual_pearl)
         print_canvas_wp(suggested_canvas)
-        
-
-        print(f"\nWatched {user_maria_anna.canvas_in_pearl_counter} of {get_number_of_canvas_from_pearl(sample_route[actual_pearl])} canvas. Total canvas are: {total_canvas}")
-    
+        print(f"\nWatched {user_maria_anna.canvas_in_pearl_counter} of {get_number_of_canvas_from_pearl(sample_route[actual_pearl])} canvas. Total canvas are: {total_canvas}")    
         choice = ''
 
-    pl.plot_satisfaction(actual_pearl, user_maria_anna, compute_satisfaction(user_maria_anna))
+    # pl.plot_satisfaction_2(user_maria_anna)
     print("End of the route! Byeee :3")
