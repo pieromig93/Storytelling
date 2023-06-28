@@ -272,8 +272,6 @@ if __name__ == '__main__':
         print("\nBased on clustering, I suggest you this canvas: ")
         print_canvas_wp(filtered_canvas)
     
-    
-
         initial_choice = 0
         while initial_choice != -1:
             initial_choice = input("\nChoose the first canvas: ")

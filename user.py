@@ -1,7 +1,6 @@
 class User:
     id = 0
 
-
     def __init__(self, name, pref, route, color):
         self.name = name
         self.preferences = pref
