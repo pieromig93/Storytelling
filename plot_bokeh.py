@@ -54,8 +54,8 @@ def plot_point(canvas, examinated_canvas, user, suggested_canvas, route, actual_
 
     file_point.close()
             
-    print(reachable_canvas_list)
-    print(len(reachable_canvas_list))
+    # print(reachable_canvas_list)
+    # print(len(reachable_canvas_list))
     X = np.array(X).astype(np.float_)
     actual_canvas_point = np.array(actual_canvas_point).astype(np.float_)
     suggested_canvas_point = np.array(suggested_canvas_point).astype(np.float_)
@@ -74,25 +74,13 @@ def plot_point(canvas, examinated_canvas, user, suggested_canvas, route, actual_
         canvas_ = canvas_list
     ))
 
-    source_suggested = ColumnDataSource(data=dict(
-        x = suggested_canvas_point[:,0],
-        y = suggested_canvas_point[:,1],
-        canvas_ = suggested_canvas_list
-    ))
-
-    source_reachable = ColumnDataSource(data=dict(
-        x = reachable_canvas_point[:,0],
-        y = reachable_canvas_point[:,1],
-        canvas_ = reachable_canvas_list
-    ))
-
     source_actual = ColumnDataSource(data=dict(
         x = actual_canvas_point[:,0],
         y = actual_canvas_point[:,1],
         canvas_ = actual_canvas_list
     ))
 
-    p = figure(title = "BTE-Space", width=1200, height= 800, x_axis_label = "Beni", y_axis_label = "Tecniche Edilizie", tools=TOOLS, tooltips=TOOLTIPS)
+    p = figure(title = "BTE-Space", width=1200, height= 800, x_axis_label = "Beni", y_axis_label = "Tecniche Edilizie", tools=TOOLS, tooltips=TOOLTIPS, y_range =(-0.01, 0.35))
     
     profile_point = p.triangle(
             x = user_point[0],
@@ -107,12 +95,6 @@ def plot_point(canvas, examinated_canvas, user, suggested_canvas, route, actual_
         fill_color="red",
         line_color="black", size = 18)
     
-    suggested_canvas_r = p.circle(
-        source = source_suggested,
-        legend_label="Suggested Canvas",
-        fill_color="cyan",
-        fill_alpha=0.9,
-        line_color="blue", size = 16)
 
     canvas_r = p.circle(
         source=source,
@@ -120,15 +102,25 @@ def plot_point(canvas, examinated_canvas, user, suggested_canvas, route, actual_
         fill_color="plum",
         fill_alpha=0.5,
         line_color="blue", size = 12)
+
+    renders = [canvas_r, actual_canvas_r]
     
-    canvas_reachable_r = p.circle(
-        source=source_reachable,
-        legend_label="Reachable Canvas",
-        fill_color="lightgreen",
-        line_color="black", size = 12)
+    if len(reachable_canvas_list) > 2:
+
+        source_reachable = ColumnDataSource(data=dict(
+            x = reachable_canvas_point[:,0],
+            y = reachable_canvas_point[:,1],
+            canvas_ = reachable_canvas_list
+        ))
     
-    
-    if len(visited_canvas_list)>0:
+        canvas_reachable_r = p.circle(
+            source=source_reachable,
+            legend_label="Reachable Canvas",
+            fill_color="lightgreen",
+            line_color="black", size = 12)
+        renders.append(canvas_reachable_r)
+
+    if len(visited_canvas_list) > 0:
         source_visited = ColumnDataSource(data=dict(
             x = visited_canvas_point[:,0],
             y = visited_canvas_point[:,1],
@@ -141,40 +133,86 @@ def plot_point(canvas, examinated_canvas, user, suggested_canvas, route, actual_
         fill_color="black",
         line_color="black", size = 12)
 
-        p.hover.renderers = [canvas_r, suggested_canvas_r, actual_canvas_r, canvas_reachable_r, canvas_visited_r] 
-    else:
-        p.hover.renderers = [canvas_r, suggested_canvas_r, actual_canvas_r, canvas_reachable_r] 
-
-    show(p)
-
-def plot_satisfaction(actual_pearl, user, user_point):
-
-    print(f"the user point is: {user_point}")
-    p = figure(title = "Satisfaction-Space", width=800, height= 800, x_axis_label = "Visited Canvas", y_axis_label = "Satisfaction")
-    x1 = []
-    i = 0
-    y1= []
-    y2 = []
-
-    global pearl,chcanv_value, chcanv_value2
-    if(actual_pearl == 1 and pearl == 0):
-        chcanv_value = user.satisfaction[-1]
-        pearl = 1
-    if(actual_pearl == 2 and pearl == 1):
-        chcanv_value2 = user.satisfaction[-1]
-        pearl = 2
+        renders.append(canvas_visited_r) 
+    
+    if len(suggested_canvas_list)>0:
+        source_suggested = ColumnDataSource(data=dict(
+            x = suggested_canvas_point[:,0],
+            y = suggested_canvas_point[:,1],
+            canvas_ = suggested_canvas_list
+            )) 
         
-    for y in user.visited_canvas:
-        x1.append(i)
-        y1.append(chcanv_value)
-        y2.append(chcanv_value2)
-        i+=1
-    
-    print(f"The user satisfaction is: {user.satisfaction}")
-    
-    p.line(x=x1, y=user.satisfaction, line_width=3)
-    if(actual_pearl > 0):
-        p.line(x=x1, y=y1, line_width = 3, color="red", line_alpha = 0.7, line_dash = "dashed")
-        p.line(x=x1, y=y2, line_width = 3, color="grey", line_alpha = 0.7, line_dash = "dashed")
-    
+        suggested_canvas_r = p.circle(
+            source = source_suggested,
+            legend_label="Suggested Canvas",
+            fill_color="cyan",
+            fill_alpha=0.9,
+            line_color="blue", size = 16)
+        
+        renders.append(suggested_canvas_r)
+
+    p.hover.renderers = renders 
     show(p)
+
+
+def plot_satisfaction_2(user):
+    
+    TOOLTIPS = [
+        ("(x, y)", "($x, $y)"),
+        ("Value","@value")
+    ]
+    
+    p = figure(title = "Satisfaction-Space", width=800, height= 800, x_axis_label = "Visited Canvas", y_axis_label = "Satisfaction", tooltips=TOOLTIPS)
+    x1 = []
+
+    for i, vc in enumerate(user.visited_canvas):
+        x1.append(i+1)
+
+    
+    source_sat = ColumnDataSource(data=dict(
+        x = x1,
+        y = user.satisfaction,
+        value = user.satisfaction
+    ))
+
+    sat = p.line(source=source_sat, line_width=3, legend_label="Satisfaction")
+
+    for i in user.change_pearl_satisfaction_value:
+        p.line(x=x1, y=i, line_width = 3, color="red", line_alpha = 0.7, line_dash = "dashed", legend_label="Change Pearl")
+    
+    p.hover.renderers = [sat]
+    p.legend.location = "top_left" 
+    print(f"The user satisfaction is: {user.satisfaction}")
+    show(p)
+
+def plot_satisfaction_users(users):
+
+        sat = []
+        TOOLTIPS = [
+            ("(x, y)", "($x, $y)"),
+            ("Value","@value")
+        ]
+        
+        p = figure(title = "Satisfaction-Space", width=800, height= 800, x_axis_label = "Visited Canvas", y_axis_label = "Satisfaction", tooltips=TOOLTIPS)
+        
+        for user in users:
+            x1 = []
+            for i, vc in enumerate(user.visited_canvas):
+                x1.append(i+1)
+
+            source_sat = ColumnDataSource(data=dict(
+                x = x1,
+                y = user.satisfaction,
+                value = user.satisfaction
+            ))
+
+            sat.append(p.line(source=source_sat, line_width=3, legend_label="Satisfaction of "+user.name, color = user.color))
+            print(f"The user {user.name} satisfaction is: {user.satisfaction}")
+            for i in user.change_pearl_satisfaction_value:
+                p.line(x=x1, y=i, line_width = 3, color="red", line_alpha = 0.7, line_dash = "dashed", legend_label="Change Pearl")
+        
+        p.hover.renderers = sat
+        p.legend.location = "top_left" 
+        
+        show(p)
+
