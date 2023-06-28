@@ -103,9 +103,9 @@ def print_route_pos(actual_pearl, route):
     print("\nRoute: ")
     for i,r in enumerate(route):
         if i == actual_pearl:
-            print(str(i)+")"+str(r)+" <---")
+            print(str(i)+")"+str(r).split(".", maxsplit = 1)[1]+" <---")
         else:
-            print(str(i)+")"+str(r))
+            print(str(i)+")"+str(r).split(".", maxsplit = 1)[1])
 
     print("")
 
